@@ -1,13 +1,13 @@
 
-// import { HelloWorld } from "./classes/hello-world.class";
-import type { HelloWorld as IHelloWorld } from './classes/hello-world.class';
 
-const isNode = typeof process !== "undefined" && process.versions != null && process.versions.node != null;
-const isMJS = typeof require === 'undefined';
-// @ts-ignore
-const { HelloWorld: Hello } = isNode && (isMJS ? await import('./classes/hello-world.class.js') : eval(`require('./classes/hello-world.class.js')`));
+import { HttpServer } from './classes/http-server.class';
 
-const HelloWorld: typeof IHelloWorld = Hello;
+// const isNode = typeof process !== "undefined" && process.versions != null && process.versions.node != null;
+// const isMJS = typeof require === 'undefined';
+// // @ts-ignore
+// const { Server: Hello } = isNode && (isMJS ? await import('./classes/server.class.js') : eval(`require('./classes/server.class.js')`));
 
-export { HelloWorld }
+// const HelloWorld: typeof IHelloWorld = Hello;
+
+export { HttpServer }
 

@@ -7,7 +7,7 @@ import { IHTTPContextData } from "./http-context-data.interface";
 export interface IHTTPControllerHandler<T> {
     path: {
         method: HttpMethodEnum;
-        relate: string;
+        relative?: string;
     },
     action: (request: Request, context: IHTTPContextData) => Promise<T>
 }

@@ -7,6 +7,10 @@ import { IHTTPHeader } from '../interfaces/http-header.interface';
 import { IHTTPController } from '../interfaces/http-controller.interface';
 import { IHTTPIntermediateAction } from '../interfaces/http-action-intermediate.interface';
 import { IHTTPContextData } from '../interfaces/http-context-data.interface';
+import { IHTTPControllerHandler } from '../interfaces/http-controller-handler.interface';
+import { HttpMethodEnum } from '../enums/http-method.enum';
+import { IHttpResponseConstructor } from '../interfaces/http-response-constructor.interface';
+import { HTTPResponse } from './http-response.class';
 
 export class HttpServer {
 
@@ -18,7 +22,9 @@ export class HttpServer {
         after: <IHTTPIntermediateAction[]>[]
     }
 
-    constructor(port = 80, responseCtor?: any) {
+    private ctorResponse: IHttpResponseConstructor;
+
+    constructor(port = 80, private responseCtor?: IHttpResponseConstructor) {
         const app = express();
         const router = this.router = Router();
         const server = this.server = http.createServer(app);
@@ -30,6 +36,8 @@ export class HttpServer {
         app.use('/', router);
         // Start listening server
         server.listen(port);
+
+        this.ctorResponse = responseCtor || HTTPResponse;
     }
 
     public headers = {
@@ -111,5 +119,52 @@ export class HttpServer {
         if(result && result instanceof Error) {
             throw result;
         }
+    }
+
+    private async handle(path: string, method: HttpMethodEnum, action: IHTTPControllerHandler<unknown>['action']): Promise<void> {
+        this.router[method](path, async (request: Request, response: Response) => {
+            try {
+                let answer: unknown;
+
+                const context: IHTTPContextData = {
+                    code: 500,
+                    headers: this.headers.get()
+                }
+
+                try {
+                    for await(let before of this.Request.before) {
+                        await this.execute(request, context, before);
+                    }
+                } catch(e) { }
+
+                try {
+                    answer = await action(request, context);
+                } catch(e) { }
+                
+                try {
+                    for await(let after of this.Request.after) {
+                        await this.execute(request, context, after);
+                    }
+                } catch(e) { }
+
+                this.reply(response, answer, context);
+            } catch(e) { }
+        });
+    }
+
+    private reply(response: Response, answer: unknown, ctx: IHTTPContextData) {
+        try {
+            const { code, headers, data, stream } = new this.ctorResponse(answer, ctx);
+
+            response.status(code);
+    
+            headers.forEach(({ key, value }) => response.header(key, value));
+    
+            if (stream) {
+                stream.pipe(response);
+            } else {
+                response.send(data);
+            }
+        } catch(e) { }
     }
 }

@@ -7,7 +7,7 @@ import { IHTTPResponse } from '../interfaces/http-response.interface';
 
 export class HTTPResponse implements IHTTPResponse {
 
-    public code: number = 500;
+    public code: number = 200;
     public headers: IHTTPHeader[] = [ ];
     public stream?: ReadStream;
     public data?: unknown;

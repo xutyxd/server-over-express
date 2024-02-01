@@ -1,21 +1,23 @@
 
 import http, { Server } from 'http';
+import { AddressInfo } from 'net';
 
-import express, { Application, Router, Request, Response } from "express";
+import express, { Router, Request, Response } from "express";
 import * as bodyParser from 'body-parser';
 import { IHTTPHeader } from '../interfaces/http-header.interface';
 import { IHTTPController } from '../interfaces/http-controller.interface';
-import { IHTTPIntermediateAction } from '../interfaces/http-action-intermediate.interface';
+import { IHTTPIntermediateAction } from '../interfaces/http-intermediate-action.interface';
 import { IHTTPContextData } from '../interfaces/http-context-data.interface';
 import { IHTTPControllerHandler } from '../interfaces/http-controller-handler.interface';
 import { HttpMethodEnum } from '../enums/http-method.enum';
 import { IHttpResponseConstructor } from '../interfaces/http-response-constructor.interface';
 import { HTTPResponse } from './http-response.class';
 
-export class HttpServer {
+export class HTTPServer {
 
-    private router: Router;
+    private Port: number;
     private server: Server;
+    private router: Router;
     private Headers: IHTTPHeader[] = [];
     private Request = {
         before: <IHTTPIntermediateAction[]>[],
@@ -24,7 +26,7 @@ export class HttpServer {
 
     private ctorResponse: IHttpResponseConstructor;
 
-    constructor(port = 80, private responseCtor?: IHttpResponseConstructor) {
+    constructor(port = 0, responseCtor?: IHttpResponseConstructor) {
         const app = express();
         const router = this.router = Router();
         const server = this.server = http.createServer(app);
@@ -36,8 +38,14 @@ export class HttpServer {
         app.use('/', router);
         // Start listening server
         server.listen(port);
-
+        const address = server.address();
+        this.Port = (address as AddressInfo).port || parseInt(address as string);
+        // Save constructor for reply
         this.ctorResponse = responseCtor || HTTPResponse;
+    }
+
+    public get port() {
+        return this.Port;
     }
 
     public headers = {
@@ -59,9 +67,10 @@ export class HttpServer {
             controllers.forEach((controller) => this.controllers.add(controller));
             // Register handlers
             handlers.forEach(({ path: { relative, method }, action }) => {
-                const absolute = `${base}/${path}${relative && '/' + relative}`;
+                
+                const absolute = [ base, path, relative ].filter(Boolean).join('/') || '/';
                 this.handle(absolute, method, action);
-            })
+            });
         }
     }
 
@@ -82,6 +91,12 @@ export class HttpServer {
                 this.Request.after = this.Request.after.filter(({ execute }) => execute.toString() !== fn.toString());
             }
         }
+    }
+
+    public async close() {
+        return new Promise((resolve) => {
+            this.server.close(resolve);
+        });
     }
 
     private async execute(request: Request, context: IHTTPContextData, action: IHTTPIntermediateAction): Promise<void> {
@@ -127,7 +142,7 @@ export class HttpServer {
                 let answer: unknown;
 
                 const context: IHTTPContextData = {
-                    code: 500,
+                    code: 200,
                     headers: this.headers.get()
                 }
 
@@ -158,7 +173,9 @@ export class HttpServer {
 
             response.status(code);
     
-            headers.forEach(({ key, value }) => response.header(key, value));
+            [ ...this.headers.get(), ...headers].forEach(({ key, value }) => {
+                response.header(key, value);
+            });
     
             if (stream) {
                 stream.pipe(response);

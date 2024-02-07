@@ -35,7 +35,7 @@ export class HTTPServer {
         // Parse application/json
         app.use(bodyParser.json());
         // Pass router to listen all paths
-        app.use('/', router);
+        app.use(router);
         // Start listening server
         server.listen(port);
         const address = server.address();
@@ -58,17 +58,20 @@ export class HTTPServer {
         remove: (header: string): void => {
             this.Headers = this.Headers.filter(({ key }) => key !== header);
         }
+    }   
+
+    private url(paths: (string | undefined)[]) {
+        return [ '/', ...paths ].filter(Boolean).join('/').replace(/\/{2,}/g, '/');
     }
 
     public controllers = {
         add: (controller: IHTTPController, base = '') => {
             const { path, controllers = [ ], handlers } = controller;
             // Register all subcontrollers
-            controllers.forEach((controller) => this.controllers.add(controller));
+            controllers.forEach((controller) => this.controllers.add(controller, this.url([ base, path ])));
             // Register handlers
             handlers.forEach(({ path: { relative, method }, action }) => {
-                
-                const absolute = [ base, path, relative ].filter(Boolean).join('/') || '/';
+                const absolute = this.url([ base, path, relative ])
                 this.handle(absolute, method, action);
             });
         }

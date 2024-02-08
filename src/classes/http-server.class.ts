@@ -153,17 +153,21 @@ export class HTTPServer {
                     for await(let before of this.Request.before) {
                         await this.execute(request, context, before);
                     }
-                } catch(e) { }
 
-                try {
                     answer = await action(request, context);
-                } catch(e) { }
-                
-                try {
-                    for await(let after of this.Request.after) {
-                        await this.execute(request, context, after);
+                } catch(e) {
+                    answer = e;
+
+                    if (context.code >= 200 && context.code < 400) {
+                        context.code = 500;
                     }
-                } catch(e) { }
+                } finally {
+                    try {
+                        for await(let after of this.Request.after) {
+                            await this.execute(request, context, after);
+                        }
+                    } catch(e) { }
+                }
 
                 this.reply(response, answer, context);
             } catch(e) { }

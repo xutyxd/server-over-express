@@ -17,6 +17,7 @@ tmp
 cjs
 mjs
 test
+src/app.ts
 
 # Coverage reports
 coverage

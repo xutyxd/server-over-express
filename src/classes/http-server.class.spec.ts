@@ -1,10 +1,11 @@
 
-import { Request } from "express";
+import { Request as HTTPRequest } from "express";
 import { HttpMethodEnum } from '../enums/http-method.enum';
 import { IHTTPContextData } from '../interfaces/http-context-data.interface';
 import { IHTTPController } from '../interfaces/http-controller.interface';
 import { HTTPServer } from './http-server.class';
 import { IHTTPIntermediateAction } from "../interfaces/http-intermediate-action.interface";
+import { IHttpResponseConstructor } from "../interfaces/http-response-constructor.interface";
 describe('HTTPServer class', () => {
     describe('HTTPServer instance', () => {
         let httpServer: HTTPServer;
@@ -26,6 +27,53 @@ describe('HTTPServer class', () => {
 
         it('should set a port', () => {
             expect(httpServer.port).toEqual(expect.any(Number));
+        });
+
+        it('should set an specific port', async () => {
+            const port = 8083;
+            const httpServer = new HTTPServer(port);
+            const response = await fetch(`http://localhost:${port}`);
+
+            expect(response).toBeInstanceOf(Response);
+            await httpServer.close();
+        });
+
+        it('should set an specific response', async () => {
+            const port = 8083;
+            const httpResponse: IHttpResponseConstructor = class {
+
+                public data: unknown;
+                public code = 253;
+                public headers = [];
+
+                constructor(response: unknown, context: IHTTPContextData) {
+                    this.data = 'Response';
+                }
+            }
+
+            const httpServer = new HTTPServer(port, httpResponse);
+            const controller = ((): IHTTPController => {
+                return {
+                    path: '',
+                    handlers: [{
+                        path: {
+                            method: HttpMethodEnum.GET,
+                        },
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
+                            return 'TEST';
+                        }
+                    }]
+                };
+            })();
+            httpServer.controllers.add(controller);
+
+            const response = await fetch(`http://localhost:${port}`);
+            const text = await response.text();
+            const status = response.status;
+
+            expect(text).toBe('Response');
+            expect(status).toBe(253);
+            await httpServer.close();
         });
 
         it('should response', async () => {
@@ -52,7 +100,7 @@ describe('HTTPServer class', () => {
                         path: {
                             method: HttpMethodEnum.GET,
                         },
-                        action: async (request: Request, context: IHTTPContextData) => {
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
                             return 'TEST';
                         }
                     }]
@@ -109,7 +157,7 @@ describe('HTTPServer class', () => {
                     path: {
                         method: HttpMethodEnum.GET,
                     },
-                    action: async (request: Request, context: IHTTPContextData) => {
+                    action: async (request: HTTPRequest, context: IHTTPContextData) => {
                         return 'TEST';
                     }
                 }]
@@ -129,7 +177,7 @@ describe('HTTPServer class', () => {
                     path: {
                         method: HttpMethodEnum.GET,
                     },
-                    action: async (request: Request, context: IHTTPContextData) => {
+                    action: async (request: HTTPRequest, context: IHTTPContextData) => {
                         return 'SUB';
                     }
                 }]
@@ -141,7 +189,7 @@ describe('HTTPServer class', () => {
                     path: {
                         method: HttpMethodEnum.GET,
                     },
-                    action: async (request: Request, context: IHTTPContextData) => {
+                    action: async (request: HTTPRequest, context: IHTTPContextData) => {
                         return 'TEST';
                     }
                 }],
@@ -177,7 +225,7 @@ describe('HTTPServer class', () => {
         describe('HTTPServer request.before', () => {
             it('should add a before.action to perform before request', async () => {
                 const action: IHTTPIntermediateAction = {
-                    execute: (request: Request, context: IHTTPContextData) => {
+                    execute: (request: HTTPRequest, context: IHTTPContextData) => {
                         context.headers.push({ key: 'key', value: 'value' });
                         context.test = 'TEST';
                     },
@@ -192,7 +240,7 @@ describe('HTTPServer class', () => {
                         path: {
                             method: HttpMethodEnum.GET,
                         },
-                        action: async (request: Request, context: IHTTPContextData) => {
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
                             return context.test;
                         }
                     }]
@@ -211,7 +259,7 @@ describe('HTTPServer class', () => {
 
             it('should add a before.action and not execute it using exclude path', async () => {
                 const action: IHTTPIntermediateAction = {
-                    execute: (request: Request, context: IHTTPContextData) => {
+                    execute: (request: HTTPRequest, context: IHTTPContextData) => {
                         context.headers.push({ key: 'key', value: 'value' });
                         context.test = 'TEST';
                     },
@@ -227,7 +275,7 @@ describe('HTTPServer class', () => {
                         path: {
                             method: HttpMethodEnum.GET,
                         },
-                        action: async (request: Request, context: IHTTPContextData) => {
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
                             return context.test;
                         }
                     }]
@@ -246,7 +294,7 @@ describe('HTTPServer class', () => {
 
             it('should add a before.action, throw an error an controller.action will not be executed', async () => {
                 const action: IHTTPIntermediateAction = {
-                    execute: (request: Request, context: IHTTPContextData) => {
+                    execute: (request: HTTPRequest, context: IHTTPContextData) => {
                         context.headers.push({ key: 'key', value: 'value' });
                         context.test = 'TEST';
 
@@ -263,7 +311,7 @@ describe('HTTPServer class', () => {
                         path: {
                             method: HttpMethodEnum.GET,
                         },
-                        action: async (request: Request, context: IHTTPContextData) => {
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
                             return context.test;
                         }
                     }]
@@ -283,7 +331,7 @@ describe('HTTPServer class', () => {
 
             it('should add and then remove a before.action to perform before request', async () => {
                 const action: IHTTPIntermediateAction = {
-                    execute: (request: Request, context: IHTTPContextData) => {
+                    execute: (request: HTTPRequest, context: IHTTPContextData) => {
                         context.headers.push({ key: 'key', value: 'value' });
                     }
                 }
@@ -301,7 +349,7 @@ describe('HTTPServer class', () => {
         describe('HTTPServer request.after', () => {
             it('should add an after.action to perform after request', async () => {
                 const action: IHTTPIntermediateAction = {
-                    execute: (request: Request, context: IHTTPContextData) => {
+                    execute: (request: HTTPRequest, context: IHTTPContextData) => {
                         context.headers.push({ key: 'key', value: 'value' });
                         context.test = 'TEST';
                     },
@@ -316,7 +364,7 @@ describe('HTTPServer class', () => {
                         path: {
                             method: HttpMethodEnum.GET,
                         },
-                        action: async (request: Request, context: IHTTPContextData) => {
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
                             return context.test;
                         }
                     }]
@@ -335,7 +383,7 @@ describe('HTTPServer class', () => {
 
             it('should add an after.action and not execute it using exclude path', async () => {
                 const action: IHTTPIntermediateAction = {
-                    execute: (request: Request, context: IHTTPContextData) => {
+                    execute: (request: HTTPRequest, context: IHTTPContextData) => {
                         context.headers.push({ key: 'key', value: 'value' });
                         context.test = 'TEST';
                     },
@@ -351,7 +399,7 @@ describe('HTTPServer class', () => {
                         path: {
                             method: HttpMethodEnum.GET,
                         },
-                        action: async (request: Request, context: IHTTPContextData) => {
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
                             return context.test;
                         }
                     }]
@@ -370,7 +418,7 @@ describe('HTTPServer class', () => {
 
             it('should add an after.action, and modify status code', async () => {
                 const action: IHTTPIntermediateAction = {
-                    execute: (request: Request, context: IHTTPContextData) => {
+                    execute: (request: HTTPRequest, context: IHTTPContextData) => {
                         context.headers.push({ key: 'key', value: 'value' });
                         context.test = 'TEST';
                         context.code = 500;
@@ -386,7 +434,7 @@ describe('HTTPServer class', () => {
                         path: {
                             method: HttpMethodEnum.GET,
                         },
-                        action: async (request: Request, context: IHTTPContextData) => {
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
                             return 'AFTER';
                         }
                     }]
@@ -406,7 +454,7 @@ describe('HTTPServer class', () => {
 
             it('should add and then remove an after.action to perform after request', async () => {
                 const action: IHTTPIntermediateAction = {
-                    execute: (request: Request, context: IHTTPContextData) => {
+                    execute: (request: HTTPRequest, context: IHTTPContextData) => {
                         context.headers.push({ key: 'key', value: 'value' });
                     }
                 }

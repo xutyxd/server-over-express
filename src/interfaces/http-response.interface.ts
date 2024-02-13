@@ -8,4 +8,6 @@ export interface IHTTPResponse {
     headers: IHTTPHeader[];
     stream?: ReadStream;
     data?: unknown;
+
+    reply(): unknown
 }

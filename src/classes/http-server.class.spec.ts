@@ -49,6 +49,10 @@ describe('HTTPServer class', () => {
                 constructor(response: unknown, context: IHTTPContextData) {
                     this.data = 'Response';
                 }
+
+                public reply() {
+                    return this.data;
+                }
             }
 
             const httpServer = new HTTPServer(port, httpResponse);
@@ -165,9 +169,9 @@ describe('HTTPServer class', () => {
     
             httpServer.controllers.add(controller);
             const response = await fetch(`${url}/test`);
-            const text = await response.text();
+            const json = await response.json();
 
-            expect(text).toBe('TEST');
+            expect(json.data).toBe('TEST');
         });
 
         it('should add a controller with subcontroller', async () => {
@@ -198,13 +202,13 @@ describe('HTTPServer class', () => {
 
             httpServer.controllers.add(controller);
             const responseA = await fetch(`${url}/test`);
-            const textA = await responseA.text();
+            const jsonA = await responseA.json();
 
             const responseB = await fetch(`${url}/test/sub`);
-            const textB = await responseB.text();
+            const jsonB = await responseB.json();
 
-            expect(textA).toBe('TEST');
-            expect(textB).toBe('SUB');
+            expect(jsonA.data).toBe('TEST');
+            expect(jsonB.data).toBe('SUB');
         });
     });
 
@@ -250,11 +254,11 @@ describe('HTTPServer class', () => {
                 httpServer.request.before.add(action);
 
                 const response = await fetch(url);
-                const text = await response.text();
+                const json = await response.json();
                 const header = response.headers.get('key');
 
                 expect(header).toBe('value');
-                expect(text).toBe('TEST');
+                expect(json.data).toBe('TEST');
             });
 
             it('should add a before.action and not execute it using exclude path', async () => {
@@ -285,11 +289,11 @@ describe('HTTPServer class', () => {
                 httpServer.request.before.add(action);
 
                 const response = await fetch(url);
-                const text = await response.text();
+                const json = await response.json();
                 const header = response.headers.get('key');
 
                 expect(header).toBe(null);
-                expect(text).toBe('');
+                expect(json.data).toBe(undefined);
             });
 
             it('should add a before.action, throw an error an controller.action will not be executed', async () => {
@@ -321,12 +325,12 @@ describe('HTTPServer class', () => {
                 httpServer.request.before.add(action);
 
                 const response = await fetch(url);
-                const text = await response.text();
+                const json = await response.json();
                 const header = response.headers.get('key');
 
                 expect(response.status).toBe(500);
                 expect(header).toBe('value');
-                expect(text).toBe('Action error');
+                expect(json.data).toBe('Action error');
             });
 
             it('should add and then remove a before.action to perform before request', async () => {
@@ -374,11 +378,11 @@ describe('HTTPServer class', () => {
                 httpServer.request.after.add(action);
 
                 const response = await fetch(url);
-                const text = await response.text();
+                const json = await response.json();
                 const header = response.headers.get('key');
 
                 expect(header).toBe('value');
-                expect(text).toBe('');
+                expect(json.data).toBe(undefined);
             });
 
             it('should add an after.action and not execute it using exclude path', async () => {
@@ -409,11 +413,11 @@ describe('HTTPServer class', () => {
                 httpServer.request.after.add(action);
 
                 const response = await fetch(url);
-                const text = await response.text();
+                const json = await response.json();
                 const header = response.headers.get('key');
 
                 expect(header).toBe(null);
-                expect(text).toBe('');
+                expect(json.data).toBe(undefined);
             });
 
             it('should add an after.action, and modify status code', async () => {
@@ -444,12 +448,12 @@ describe('HTTPServer class', () => {
                 httpServer.request.after.add(action);
 
                 const response = await fetch(url);
-                const text = await response.text();
+                const json = await response.json();
                 const header = response.headers.get('key');
 
                 expect(response.status).toBe(500);
                 expect(header).toBe('value');
-                expect(text).toBe('AFTER');
+                expect(json.data).toBe('AFTER');
             });
 
             it('should add and then remove an after.action to perform after request', async () => {

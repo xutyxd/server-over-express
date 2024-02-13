@@ -11,7 +11,7 @@ export class HTTPResponse implements IHTTPResponse {
     public headers: IHTTPHeader[] = [ ];
     public stream?: ReadStream;
     public data?: unknown;
-    public timestamp: number;
+    private timestamp: number;
 
     constructor(response: unknown, context: IHTTPContextData) {
         const { code, stream, headers } = context;
@@ -21,11 +21,19 @@ export class HTTPResponse implements IHTTPResponse {
 
         this.data = response;
 
-        if (response instanceof Error) {
-            this.data = response.message;
-        }
-
         this.stream = stream;
         this.timestamp = new Date().getTime();
+    }
+
+    public reply() {
+        const { code, headers, data, timestamp } = this;
+
+        const answer = data instanceof Error ? data.message : data;
+
+        return {
+            code,
+            data: answer,
+            timestamp
+        }
     }
 }

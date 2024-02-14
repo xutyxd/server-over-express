@@ -9,5 +9,5 @@ export interface IHTTPControllerHandler<T> {
         method: HttpMethodEnum;
         relative?: string;
     },
-    action: (request: HTTPRequest, context: IHTTPContextData) => Promise<T>
+    action: (request: HTTPRequest, context: IHTTPContextData) => Promise<T> | T
 }

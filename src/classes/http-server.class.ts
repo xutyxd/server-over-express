@@ -39,7 +39,7 @@ export class HTTPServer {
         // Start listening server
         server.listen(port);
         const address = server.address();
-        this.Port = (address as AddressInfo).port || parseInt(address as string);
+        this.Port = port || (address as AddressInfo).port || parseInt(address as string);
         // Save constructor for reply
         this.ctorResponse = responseCtor || HTTPResponse;
     }

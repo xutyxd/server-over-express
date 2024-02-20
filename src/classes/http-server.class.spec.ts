@@ -472,5 +472,107 @@ describe('HTTPServer class', () => {
                 expect(header).toBe(null);
             });
         });
+
+        describe('HTTPServer custom response by request', () => {
+            it('should not instanciate response configured on constructor', async () => {
+                const httpResponse: IHttpResponseConstructor = class {
+
+                    public data: unknown;
+                    public code = 253;
+                    public headers = [];
+    
+                    constructor(response: unknown, context: IHTTPContextData) {
+                        this.data = 'Response';
+                    }
+    
+                    public reply() {
+                        return this.data;
+                    }
+                }
+
+                const httpServer = new HTTPServer(undefined, httpResponse);
+                const { port } = httpServer;
+                const url = `http://localhost:${port}`;
+
+                const controller = {
+                    path: '',
+                    handlers: [{
+                        path: {
+                            method: HttpMethodEnum.GET,
+                        },
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
+                            const response = new httpResponse(request, context);
+                            response.data = 'Response of controller';
+                            response.code = 222;
+
+                            return response;
+                        }
+                    }]
+                };
+
+                httpServer.controllers.add(controller);
+
+                try {
+                    const response = await fetch(url);
+                    const text = await response.text();
+                    const header = response.headers.get('key');
+
+                    expect(response.status).toBe(222);
+                    expect(text).toBe('Response of controller');
+                } finally {
+                    httpServer.close();
+                }
+            });
+
+            it('should end request if response reply undefined', async () => {
+                const httpResponse: IHttpResponseConstructor = class {
+
+                    public data: unknown;
+                    public code = 253;
+                    public headers = [];
+    
+                    constructor(response: unknown, context: IHTTPContextData) {
+                        this.data = 'Response';
+                    }
+    
+                    public reply() {
+                        return this.data;
+                    }
+                }
+
+                const httpServer = new HTTPServer(undefined, httpResponse);
+                const { port } = httpServer;
+                const url = `http://localhost:${port}`;
+
+                const controller = {
+                    path: '',
+                    handlers: [{
+                        path: {
+                            method: HttpMethodEnum.GET,
+                        },
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
+                            const response = new httpResponse(request, context);
+                            response.data = undefined;
+                            response.code = 222;
+
+                            return response;
+                        }
+                    }]
+                };
+
+                httpServer.controllers.add(controller);
+
+                try {
+                    const response = await fetch(url);
+                    const text = await response.text();
+                    const header = response.headers.get('key');
+
+                    expect(response.status).toBe(222);
+                    expect(text).toBe('');
+                } finally {
+                    httpServer.close();
+                }
+            });
+        });
     });
 });

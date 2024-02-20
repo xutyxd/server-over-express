@@ -176,8 +176,9 @@ export class HTTPServer {
 
     private reply(response: Response, answer: unknown, ctx: IHTTPContextData) {
         try {
-            const instance = new this.ctorResponse(answer, ctx);
-            const { code, headers, data, stream } = instance;
+            console.log('Answer: ', answer);
+            const instance = answer instanceof this.ctorResponse ? answer : new this.ctorResponse(answer, ctx);
+            const { code, headers, stream } = instance;
 
             response.status(code);
     
@@ -188,6 +189,13 @@ export class HTTPServer {
             if (stream) {
                 stream.pipe(response);
             } else {
+                const reply = instance.reply();
+
+                if (!reply) {
+                    response.end();
+                    return;
+                }
+
                 response.send(instance.reply());
             }
         } catch(e) { }

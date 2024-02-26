@@ -104,7 +104,7 @@ export class HTTPServer {
 
     private async execute(request: Request, context: IHTTPContextData, action: IHTTPIntermediateAction): Promise<void> {
         const { originalUrl: url } = request;
-        const { paths: { include, exclude } = { }, execute: fn } = action;
+        const { paths: { include, exclude } = { } } = action;
 
         let execute = false;
 
@@ -129,7 +129,7 @@ export class HTTPServer {
         let result: Error | void;
 
         try {
-            result = await fn(request, context);
+            result = await action.execute(request, context);
         } catch(e) {
             result = <Error>e;
         }

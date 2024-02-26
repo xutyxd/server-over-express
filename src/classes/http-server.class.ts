@@ -195,7 +195,7 @@ export class HTTPServer {
                     return;
                 }
 
-                response.send(instance.reply());
+                response.send(reply);
             }
         } catch(e) { }
     }

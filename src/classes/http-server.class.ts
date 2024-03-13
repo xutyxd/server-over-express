@@ -12,6 +12,7 @@ import { IHTTPControllerHandler } from '../interfaces/http-controller-handler.in
 import { HttpMethodEnum } from '../enums/http-method.enum';
 import { IHttpResponseConstructor } from '../interfaces/http-response-constructor.interface';
 import { HTTPResponse } from './http-response.class';
+import { HTTPContextData } from './http-context-data.class';
 
 export class HTTPServer {
 
@@ -47,6 +48,8 @@ export class HTTPServer {
     public get port() {
         return this.Port;
     }
+
+    public keys: string[] = [];
 
     public headers = {
         add: (header: IHTTPHeader): void => {
@@ -144,10 +147,13 @@ export class HTTPServer {
             try {
                 let answer: unknown;
 
-                const context: IHTTPContextData = {
+                const data: Partial<IHTTPContextData> = {
                     code: 200,
-                    headers: this.headers.get()
+                    headers: this.headers.get(),
+                    keys: this.keys
                 }
+
+                const context = new HTTPContextData(request, response, data);
 
                 try {
                     for await(let before of this.Request.before) {

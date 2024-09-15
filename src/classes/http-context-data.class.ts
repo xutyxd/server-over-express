@@ -21,6 +21,13 @@ export class HTTPContextData implements IHTTPContextData {
 
         this.code = context?.code || 200;
         this.headers = context?.headers || [];
+
+        if (request.headers) {
+            const headers = Object.entries(request.headers).forEach(([key, value]) => {
+                this.headers.push({ key, value: value as string })
+            });
+        }
+
         this.stream = context?.stream;
         this.keys = context?.keys || [];
         this.Cookies = context?.cookies;
@@ -31,7 +38,7 @@ export class HTTPContextData implements IHTTPContextData {
             this.Cookies = new Cookies(this.Request, this.Response, {
                 keys: this.keys,
                 secure: this.Request.secure
-            })
+            });
         }
 
         return this.Cookies;

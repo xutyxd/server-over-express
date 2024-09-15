@@ -137,7 +137,7 @@ export class HTTPServer {
             result = <Error>e;
         }
 
-        if(result && result instanceof Error) {
+        if((result && result instanceof Error) || context.code >= 400) {
             throw result;
         }
     }

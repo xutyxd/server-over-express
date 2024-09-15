@@ -143,6 +143,39 @@ const controller: IHTTPController = {
 httpServer.controller.add(controller);
 ```
 
+### Actions with status code higher than 400 will raise an error and not execute the next actions
+```ts
+import { HTTPServer, IHTTPController, HttpMethodEnum, IHTTPContextData, HTTPRequest } from 'server-over-express';
+
+const httpServer = new HTTPServer();
+
+const action: IHTTPIntermediateAction = {
+                    execute: (request: HTTPRequest, context: IHTTPContextData) => {
+                        context.code = 402;
+                        
+                    },
+                    paths: {
+                        include: [''],
+                    }
+                }
+
+                const controller = {
+                    path: '',
+                    handlers: [{
+                        path: {
+                            method: HttpMethodEnum.GET,
+                        },
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
+                            context.code = 201;
+                            return 'test result';
+                        }
+                    }]
+                };
+
+                httpServer.controllers.add(controller);
+                httpServer.request.before.add(action);
+```
+
 ### Execute actions before reply a request (AUTH)
 ```ts
 import { HTTPServer, IHTTPController, HttpMethodEnum, IHTTPContextData, HTTPRequest } from 'server-over-express';

@@ -333,6 +333,40 @@ describe('HTTPServer class', () => {
                 expect(json.data).toBe('Action error');
             });
 
+            it('should add a before.action and not execute it using status code and raising as an error', async () => {
+                const action: IHTTPIntermediateAction = {
+                    execute: (request: HTTPRequest, context: IHTTPContextData) => {
+                        context.code = 402;
+                        
+                    },
+                    paths: {
+                        include: [''],
+                    }
+                }
+
+                const controller = {
+                    path: '',
+                    handlers: [{
+                        path: {
+                            method: HttpMethodEnum.GET,
+                        },
+                        action: async (request: HTTPRequest, context: IHTTPContextData) => {
+                            context.code = 201;
+                            return 'test result';
+                        }
+                    }]
+                };
+
+                httpServer.controllers.add(controller);
+                httpServer.request.before.add(action);
+
+                const response = await fetch(url);
+                const json = await response.json();
+
+                expect(response.status).toBe(402);
+                expect(json.code).toBe(402);
+            });
+
             it('should add and then remove a before.action to perform before request', async () => {
                 const action: IHTTPIntermediateAction = {
                     execute: (request: HTTPRequest, context: IHTTPContextData) => {

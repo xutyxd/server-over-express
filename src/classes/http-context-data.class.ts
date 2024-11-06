@@ -25,7 +25,7 @@ export class HTTPContextData implements IHTTPContextData {
         this.headers = context?.headers || [];
 
         if (request.headers) {
-            const headers = Object.entries(request.headers).forEach(([key, value]) => {
+            Object.entries(request.headers).forEach(([key, value]) => {
                 this.headers.push({ key, value: value as string })
             });
         }

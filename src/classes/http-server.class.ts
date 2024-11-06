@@ -1,5 +1,5 @@
 
-import http, { Server } from 'http';
+import http, { Server, ServerOptions, IncomingMessage, ServerResponse } from 'http';
 import { AddressInfo } from 'net';
 
 import express, { Router, Request, Response } from "express";
@@ -27,10 +27,10 @@ export class HTTPServer {
 
     private ctorResponse: IHttpResponseConstructor;
 
-    constructor(port = 0, responseCtor?: IHttpResponseConstructor) {
+    constructor(port = 0, responseCtor?: IHttpResponseConstructor, options: ServerOptions<typeof IncomingMessage, typeof ServerResponse> = { }) {
         const app = express();
         const router = this.router = Router();
-        const server = this.server = http.createServer(app);
+        const server = this.server = http.createServer(options, app);
         // Parse application/x-www-form-urlencoded
         app.use(bodyParser.urlencoded({ extended: false }));
         // Parse application/json

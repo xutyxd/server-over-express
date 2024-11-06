@@ -1,6 +1,7 @@
 import { ReadStream } from 'node:fs';
 import { Request, Response } from "express";
 import Cookies from "cookies";
+import busboy, { Busboy } from 'busboy';
 import { IHTTPContextData } from "../interfaces/http-context-data.interface";
 import { IHTTPHeader } from "../interfaces/http-header.interface";
 
@@ -9,6 +10,7 @@ export class HTTPContextData implements IHTTPContextData {
     private Request: Request;
     private Response: Response;
     private Cookies?: Cookies;
+    private busboy?: Busboy;
     
     public code: number;
     public headers: IHTTPHeader[];
@@ -46,5 +48,13 @@ export class HTTPContextData implements IHTTPContextData {
 
     public set cookies(cookies: Cookies) {
         this.Cookies = cookies;
+    }
+
+    public get files() {
+        if (!this.busboy) {
+            this.busboy = busboy({ headers: this.Request.headers });
+        }
+
+        return this.busboy;
     }
 }

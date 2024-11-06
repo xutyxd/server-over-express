@@ -53,6 +53,7 @@ export class HTTPContextData implements IHTTPContextData {
     public get files() {
         if (!this.busboy) {
             this.busboy = busboy({ headers: this.Request.headers });
+            this.Request.pipe(this.busboy);
         }
 
         return this.busboy;

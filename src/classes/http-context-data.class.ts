@@ -1,4 +1,4 @@
-import { ReadStream } from 'node:fs';
+import { Readable } from "node:stream";
 import { Request, Response } from "express";
 import Cookies from "cookies";
 import busboy, { Busboy } from 'busboy';
@@ -14,7 +14,7 @@ export class HTTPContextData implements IHTTPContextData {
     
     public code: number;
     public headers: IHTTPHeader[];
-    public stream?: ReadStream;
+    public stream?: Readable;
     public keys: string[];
 
     constructor(request: Request, response: Response, context?: Partial<IHTTPContextData>, ) {

@@ -1,5 +1,5 @@
 
-import { ReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
 
 import { IHTTPContextData } from "../interfaces/http-context-data.interface";
 import { IHTTPHeader } from '../interfaces/http-header.interface';
@@ -9,7 +9,7 @@ export class HTTPResponse implements IHTTPResponse {
 
     public code: number = 200;
     public headers: IHTTPHeader[] = [ ];
-    public stream?: ReadStream;
+    public stream?: Readable;
     public data?: unknown;
     private timestamp: number;
 

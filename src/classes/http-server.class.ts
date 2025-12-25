@@ -1,5 +1,6 @@
 
 import http, { Server, ServerOptions, IncomingMessage, ServerResponse } from 'http';
+import { pipeline } from 'node:stream/promises';
 import { AddressInfo } from 'net';
 
 import express, { Router, Request, Response } from "express";
@@ -192,7 +193,7 @@ export class HTTPServer {
             });
     
             if (stream) {
-                stream.pipe(response);
+                pipeline(stream, response);
             } else {
                 const reply = instance.reply();
 

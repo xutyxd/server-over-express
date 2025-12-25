@@ -181,7 +181,7 @@ export class HTTPServer {
         });
     }
 
-    private reply(response: Response, answer: unknown, ctx: IHTTPContextData) {
+    private async reply(response: Response, answer: unknown, ctx: IHTTPContextData) {
         try {
             const instance = answer instanceof this.ctorResponse ? answer : new this.ctorResponse(answer, ctx);
             const { code, headers, stream } = instance;
@@ -193,7 +193,7 @@ export class HTTPServer {
             });
     
             if (stream) {
-                pipeline(stream, response);
+                await pipeline(stream, response);
             } else {
                 const reply = instance.reply();
 

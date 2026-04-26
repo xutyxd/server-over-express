@@ -27,6 +27,8 @@ export class HTTPServer {
     }
 
     private ctorResponse: IHttpResponseConstructor;
+    // Expose for integrations
+    public readonly express: ReturnType<typeof express>;
 
     constructor(port = 0, responseCtor?: IHttpResponseConstructor, options: ServerOptions<typeof IncomingMessage, typeof ServerResponse> = { }) {
         const app = express();
@@ -38,6 +40,8 @@ export class HTTPServer {
         app.use(bodyParser.json());
         // Pass router to listen all paths
         app.use(router);
+        // Save express
+        this.express = app;
         // Start listening server
         server.listen(port);
         const address = server.address();

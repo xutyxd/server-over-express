@@ -30,7 +30,7 @@ export class HTTPServer {
 
     private ctorResponse: IHttpResponseConstructor;
 
-    constructor(port = 0, responseCtor?: IHttpResponseConstructor, options: ServerOptions<typeof IncomingMessage, typeof ServerResponse> = { }) {
+    constructor(port = 0, responseCtor?: IHttpResponseConstructor, options: ServerOptions<typeof IncomingMessage, typeof ServerResponse> & { autoStart?: boolean } = { autoStart: true }) {
         const app = (this.express = express());
         const router = this.router = Router();
         const server = this.server = http.createServer(options, app);
@@ -40,12 +40,14 @@ export class HTTPServer {
         app.use(bodyParser.json());
         // Pass router to listen all paths
         app.use(router);
-        // Start listening server
-        server.listen(port);
-        const address = server.address();
-        this.Port = port || (address as AddressInfo).port || parseInt(address as string);
+        // Set port
+        this.Port = port;
         // Save constructor for reply
         this.ctorResponse = responseCtor || HTTPResponse;
+
+        if (options.autoStart) {
+            this.start();
+        }
     }
 
     public get port() {
@@ -104,6 +106,15 @@ export class HTTPServer {
                 this.Request.after = this.Request.after.filter(({ execute }) => execute.toString() !== fn.toString());
             }
         }
+    }
+
+    public start() {
+        // Start listening server
+        this.server.listen(this.port);
+        // Get address
+        const address = this.server.address();
+        // Update port it executed if Port is 0
+        this.Port = this.Port || (address as AddressInfo).port || parseInt(address as string)
     }
 
     public async close() {

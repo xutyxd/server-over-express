@@ -26,12 +26,12 @@ export class HTTPServer {
         after: <IHTTPIntermediateAction[]>[]
     }
 
+    private express;
+
     private ctorResponse: IHttpResponseConstructor;
-    // Expose for integrations
-    public readonly express: ReturnType<typeof express>;
 
     constructor(port = 0, responseCtor?: IHttpResponseConstructor, options: ServerOptions<typeof IncomingMessage, typeof ServerResponse> = { }) {
-        const app = express();
+        const app = (this.express = express());
         const router = this.router = Router();
         const server = this.server = http.createServer(options, app);
         // Parse application/x-www-form-urlencoded
@@ -40,8 +40,6 @@ export class HTTPServer {
         app.use(bodyParser.json());
         // Pass router to listen all paths
         app.use(router);
-        // Save express
-        this.express = app;
         // Start listening server
         server.listen(port);
         const address = server.address();
@@ -52,6 +50,10 @@ export class HTTPServer {
 
     public get port() {
         return this.Port;
+    }
+
+    public get app() {
+        return this.express;
     }
 
     public keys: string[] = [];
